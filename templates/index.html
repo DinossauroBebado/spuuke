@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enigma</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div id="enigma-container">
+        <h2>Resolva o Enigma</h2>
+
+        <input type="text" id="username" placeholder="Digite seu nome">
+        <div id="enigma-text">Carregando enigma...</div>
+        <br>
+        <input type="text" id="resposta" placeholder="Digite a resposta do enigma">
+        <br>
+        <button onclick="enviarResposta()">Enviar Resposta</button>
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        function obterEnigma() {
+            let username = document.getElementById('username').value;
+            if (username === "") {
+                document.getElementById('resultado').innerHTML = "Digite seu nome para continuar.";
+                return;
+            }
+
+            fetch('/obter_enigma', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: username })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('enigma-text').innerHTML = data.enigma;
+                });
+        }
+
+        function enviarResposta() {
+            let username = document.getElementById('username').value;
+            let resposta = document.getElementById('resposta').value;
+
+            if (username === "") {
+                document.getElementById('resultado').innerHTML = "Digite seu nome para continuar.";
+                return;
+            }
+
+            fetch('/verificar_resposta', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: username, resposta: resposta })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.correto) {
+                        if (data.proximo_enigma) {
+                            document.getElementById('enigma-text').innerHTML = data.proximo_enigma;
+                        } else {
+                            document.getElementById('enigma-text').innerHTML = data.mensagem;
+                        }
+                        document.getElementById('resultado').innerHTML = "Correto!";
+                    } else {
+                        document.getElementById('resultado').innerHTML = data.mensagem;
+                    }
+                });
+        }
+
+        // Exibe o primeiro enigma ao carregar a página
+        window.onload = function () {
+            obterEnigma();
+        }
+    </script>
+</body>
+
+</html>
